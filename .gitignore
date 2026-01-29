@@ -1,5 +1,7 @@
 # Specific directories
+skill_set/
 code_samples/
+writing_samples/
 
 # Python objects and environment
 __pycache__/
