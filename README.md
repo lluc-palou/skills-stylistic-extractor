@@ -50,8 +50,8 @@ skill-stylistic-extractor/
 │   ├── coding_stylistic_guide.md
 │   └── writing_stylistic_guide.md
 ├── src/                  # Source code
-│   ├── coding_stylistic_guide.py    # Code style extraction script
-│   └── writing_stylistic_guide.py   # Writing style extraction script
+│   ├── coding_stylistic_extractor.py    # Code style extraction script
+│   └── writing_stylistic_extractor.py   # Writing style extraction script
 ├── .env                  # API key configuration (not tracked)
 ├── requirements.txt      # Python dependencies
 └── README.md             # Project documentation
