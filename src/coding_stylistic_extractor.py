@@ -4,10 +4,11 @@ Utility functions for the coding stylistic extractor.
 
 import os
 import sys
-import anthropic
 from pathlib import Path
-from dotenv import load_dotenv
 from typing import List, Dict, Optional
+
+import anthropic
+from dotenv import load_dotenv
 
 # Loads environment variables from a .env file
 load_dotenv()
@@ -16,7 +17,15 @@ class StylisticExtractorUtils:
     """
     A utility class for handling file operations and API interactions.
     """
+    
     def __init__(self, code_repository_path: str, output_file_path: str) -> None:
+        """
+        Initializes the stylistic extractor utility.
+        
+        Args:
+            code_repository_path: Path to the code repository to analyze
+            output_file_path: Path where the style guide will be saved
+        """
         self.repo_path = Path(code_repository_path)
         self.output_file = output_file_path
         self.client = anthropic.Anthropic(
@@ -27,13 +36,19 @@ class StylisticExtractorUtils:
 
     def scan_repository(self, max_files: int = 20, extensions: List[str] = None) -> List[Path]:
         """
-        Scans the indicated code repository and retrieves a list of code files with specified 
-        extensions.
+        Scans the code repository and retrieves a list of code files with specified extensions.
+        
+        Args:
+            max_files: Maximum number of files to scan
+            extensions: List of file extensions to look for
+            
+        Returns:
+            List of Path objects for found code files
         """
         if extensions is None:
             extensions = [".py"]
             
-        code_files= []
+        code_files = []
 
         for ext in extensions:
             for filepath in self.repo_path.rglob(f'*{ext}'):
@@ -48,6 +63,12 @@ class StylisticExtractorUtils:
     def read_files(self, filepaths: List[Path]) -> List[Dict[str, any]]:
         """
         Reads the content of the provided list of file paths.
+        
+        Args:
+            filepaths: List of Path objects to read
+            
+        Returns:
+            List of dictionaries containing file path, content, and line count
         """
         samples = []
         total_lines = 0
@@ -75,14 +96,18 @@ class StylisticExtractorUtils:
     def extraction(self, code_samples: List[Dict[str, any]]) -> str:
         """
         Performs the initial stylistic extraction from the code samples.
+        
+        Args:
+            code_samples: List of dictionaries containing file information
+            
+        Returns:
+            Generated style guide as a string
         """
         # Prepares code for LLM processing
-        combined_code = "\n\n".join(
-            [
-                f"### File: {sample['path']}\n```python\n{sample['content']}\n```"
-                for sample in code_samples
-            ]
-        )
+        combined_code = "\n\n".join([
+            f"### File: {sample['path']}\n```python\n{sample['content']}\n```"
+            for sample in code_samples
+        ])
 
         # Coding stylistic extraction prompt declaration
         prompt = f"""I want you to analyze these Python files from a coding samples repository and create a comprehensive coding style guide.
@@ -159,32 +184,27 @@ Create a markdown document with clear sections, snippet examples showing STYLE p
 Format it as a professional style guide that could be given to a coding agent for writing ANY Python code in my style."""
 
         # Calls LLM API to generate a coding stylistic draft
+        print("\nAnalyzing code samples with Claude Sonnet 4.5...")
+        
         message = self.client.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=8000,
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
+            messages=[{
+                "role": "user",
+                "content": prompt
+            }]
         )
 
         # Stores the draft and updates the conversation history
         self.current_draft = message.content[0].text
-        self.conversation_history.append(
-            {
-                "role": "user",
-                "content": prompt
-            }
-        )
-
-        self.conversation_history.append(
-            {
-                "role": "assistant",
-                "content": self.current_draft
-            }
-        )
+        self.conversation_history.append({
+            "role": "user",
+            "content": prompt
+        })
+        self.conversation_history.append({
+            "role": "assistant",
+            "content": self.current_draft
+        })
 
         # Displays statistics
         print(f"\nCoding stylistic draft generated")
@@ -196,6 +216,9 @@ Format it as a professional style guide that could be given to a coding agent fo
     def save_draft(self, content: str = None) -> None:
         """
         Saves the current draft to a file.
+        
+        Args:
+            content: Content to save (defaults to self.current_draft)
         """
         if content is None:
             content = self.current_draft
@@ -211,37 +234,36 @@ Format it as a professional style guide that could be given to a coding agent fo
         except Exception as e:
             print(f"Error saving file: {e}")
 
+
 def main() -> None:
     """
     Main execution function.
     """
     # Configuration
     MAX_FILES = 20
-    OUTPUT_FILE = "examples/coding_stylistic_guide.md"
+    CODE_SAMPLES_DIR = "code_samples"
+    SKILL_SET_DIR = "skill_set"
+    OUTPUT_FILE = os.path.join(SKILL_SET_DIR, "coding_stylistic_guide.md")
 
     print("="*70)
     print("Coding Style Extractor")
     print("="*70)
 
-    # Gets the repository path
-    if len(sys.argv) > 1:
-        repo_path = sys.argv[1]
+    # Creates skill_set directory if it doesn't exist
+    os.makedirs(SKILL_SET_DIR, exist_ok=True)
 
-    else:
-        repo_path = input("\nPath to your code repository: ").strip()
-    
-    # Validates the repository path
-    if not Path(repo_path).exists():
-        print(f"\nError: Path does not exist. Check path: {repo_path}")
+    # Validates the code samples directory path
+    if not Path(CODE_SAMPLES_DIR).exists():
+        print(f"\nError: Code samples directory does not exist: {CODE_SAMPLES_DIR}")
         return
     
-    if not Path(repo_path).is_dir():
-        print(f"\nError: Not a directory. Check path: {repo_path}")
+    if not Path(CODE_SAMPLES_DIR).is_dir():
+        print(f"\nError: Not a directory: {CODE_SAMPLES_DIR}")
         return
 
     # Initializes the utility class
     extractor_utils = StylisticExtractorUtils(
-        code_repository_path=repo_path,
+        code_repository_path=CODE_SAMPLES_DIR,
         output_file_path=OUTPUT_FILE
     )
 
