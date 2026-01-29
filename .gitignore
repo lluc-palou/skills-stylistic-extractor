@@ -3,6 +3,7 @@ code_samples/
 
 # Python objects and environment
 __pycache__/
+.mppy_cache/
 *.py[cod]
 *$py.class
 *.so
@@ -39,10 +40,6 @@ wheels/
 # OS
 .DS_Store
 Thumbs.db
-
-# Output files (drafts)
-*_DRAFT.md
-*_draft.md
 
 # Logs
 *.log

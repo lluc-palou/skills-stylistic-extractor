@@ -42,7 +42,7 @@ class StylisticExtractorUtils:
                 if len(code_files) >= max_files:
                     break
         
-        print(f"Found {len(code_files)} code files in the repository.")
+        print(f"\nFound {len(code_files)} code files in the repository.")
         return code_files
     
     def read_files(self, filepaths: List[Path]) -> List[Dict[str, any]]:
@@ -69,7 +69,7 @@ class StylisticExtractorUtils:
             except Exception as e:
                 print(f"Error reading {filepath.name}: {e}")
         
-        print(f"Total: {total_lines} lines of code read from {len(samples)} files.")
+        print(f"\nTotal: {total_lines} lines of code read from {len(samples)} files.")
         return samples
     
     def extraction(self, code_samples: List[Dict[str, any]]) -> str:
@@ -85,26 +85,29 @@ class StylisticExtractorUtils:
         )
 
         # Coding stylistic extraction prompt declaration
-        prompt = f"""I want you to analyze these Python files from my repository and create a comprehensive coding style guide.
+        prompt = f"""I want you to analyze these Python files from a coding samples repository and create a comprehensive coding style guide.
 
-These files represent my personal coding style developed over time. Your task is to:
+IMPORTANT: These files are SAMPLES of my personal coding style. The specific application context is NOT part of my coding style. Focus ONLY on the coding patterns, conventions, and formatting choices that are consistent across all samples, regardless of what the code does.
 
-1. **Identify patterns and conventions** across all files
-2. **Create a detailed markdown style guide** that captures my distinctive coding style
-3. **Include specific examples** from my actual code
-4. **Make it prescriptive** so another AI could replicate my style exactly
+Your task is to:
+
+1. **Identify patterns and conventions** that appear consistently across all files
+2. **Create a detailed markdown style guide** that captures my personal and distinctive coding style patterns
+3. **Include specific snippet examples** from my actual code showing the STYLE, not the application logic
+4. **Make it prescriptive** so another AI could replicate my style exactly when writing ANY type of Python code
 
 Analyze these aspects:
 
 **Documentation:**
 - Docstring format (Google/NumPy/Sphinx style?)
-- What sections do I include? (Args, Returns, Examples, etc.)
+- What sections do I include? (Args, Returns, etc.)
 - Level of detail in docstrings
 - Module-level documentation patterns
+- How I describe parameters and return values
 
 **Type Hints:**
 - Where and when do I use type annotations?
-- Full typing or selective?
+- Always on function signatures? Sometimes on variables?
 - Complex types (Union, Optional, List, Dict patterns)
 
 **Naming Conventions:**
@@ -118,12 +121,13 @@ Analyze these aspects:
 - Import ordering and grouping
 - Class structure (method ordering, organization)
 - File structure patterns
-- Use of __init__.py, __main__.py
+- Global variables and constants placement
 
 **Comments:**
 - When do I add comments?
 - Inline vs block comments
 - Comment style and detail level
+- What do I explain vs what do I leave uncommented?
 
 **Code Style:**
 - Line length preferences
@@ -142,13 +146,17 @@ Analyze these aspects:
 - Any unique or characteristic patterns you notice
 - Preferred libraries or approaches
 - Code complexity preferences
+- How I structure error handling
+- Logging patterns
 
-Here are my Python files:
+REMEMBER: Extract only the STYLE patterns that are consistent across samples. Do NOT include application-specific conventions. Focus on HOW I write code, not WHAT the code does.
+
+Here are my Python code samples:
 
 {combined_code}
 
-Create a markdown document with clear sections, examples, and actionable rules.
-Format it as a professional style guide that could be given to a coding agent."""
+Create a markdown document with clear sections, snippet examples showing STYLE patterns, and actionable rules.
+Format it as a professional style guide that could be given to a coding agent for writing ANY Python code in my style."""
 
         # Calls LLM API to generate a coding stylistic draft
         message = self.client.messages.create(
@@ -182,7 +190,6 @@ Format it as a professional style guide that could be given to a coding agent.""
         print(f"\nCoding stylistic draft generated")
         print(f"  Input tokens: {message.usage.input_tokens:,}")
         print(f"  Output tokens: {message.usage.output_tokens:,}")
-        print(f"  Total tokens: {message.usage.total_tokens:,}\n")
         
         return self.current_draft
     
@@ -210,7 +217,7 @@ def main() -> None:
     """
     # Configuration
     MAX_FILES = 20
-    OUTPUT_FILE = "coding_stylistic_guide_DRAFT.md"
+    OUTPUT_FILE = "examples/coding_stylistic_guide.md"
 
     print("="*70)
     print("Coding Style Extractor")
@@ -262,11 +269,6 @@ def main() -> None:
     extractor_utils.save_draft()
 
     print(f"\nCoding stylistic extraction complete")
-    print(f"\nNext steps:")
-    print(f"  1. Review the draft: {OUTPUT_FILE}")
-    print(f"  2. Upload it to Claude.ai chat")
-    print(f"  3. Refine through conversation")
-    print(f"  4. Save final version\n")
 
 if __name__ == "__main__":
     main()
